@@ -1691,8 +1691,7 @@ for Z in range(1,103):
     Bvals = np.linspace(0.1, 4, 80)
     X, Y = np.meshgrid(svals, Bvals)
     
-    element = lobato_array[Z-1]
-    actualZ = integral2(X, Y, element)
+    actualZ = integral2(X, Y, Z)
     actualZpos = np.where(actualZ > 0, actualZ, 0)
     interp = []
     for B in Bvals:
