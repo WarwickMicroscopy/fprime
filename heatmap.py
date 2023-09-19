@@ -1719,20 +1719,19 @@ svals = np.linspace(0, 3, 60)
 Bvals = np.linspace(0.1, 4, 80)
 X, Y = np.meshgrid(svals, Bvals)
 
-# from B&K integral
-actualZ = integral2(X, Y, Z)
-actualZpos = np.where(actualZ > 0, actualZ, 0)  # only keep positive values
-
 # interpolated from parameterised curves
 interp = []
 for B in Bvals:
     interp.append(fprime(svals, B, Z))
 interZ = np.array(interp)
 
-# map of error, only when both are positive
+# from B&K integral
+actualZ = integral2(X, Y, Z)
+# actualZpos = np.where(actualZ > 0, actualZ, 0)  # only keep positive values
 
-relerror = abs(actualZpos - interZ)/actualZpos
-abserror = abs(actualZpos - interZ)
+# map of error, only when actualZ positive
+relerror = np.where(actualZ > 0, abs(actualZ - interZ)/actualZ, 0)
+abserror = np.where(actualZ > 0, abs(actualZ - interZ), 0)
 # abserror = np.where(actualZ*interZ>0, abserror, 0)
 fzeros = np.where(actualZ <= 0, 0, np.nan)
 
