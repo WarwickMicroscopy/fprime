@@ -1661,18 +1661,18 @@ preFactor = 1e10*2*h/(m_e*c)  # Angstroms
 # %% plot of f'
 Z = 78
 # NB Bvalues = np.array([0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.7, 1, 1.5, 2, 2.75, 4])
-B = 2.0
+B = 2.75
 svals = np.linspace(0, 4, 60)
 
 #B&K integral
-fprime_i = integral2(svals, B, lobato_array[Z-1])
+fprime_i = integral2(svals, B, lobato_array[Z])
 
 #parameterised version
 requiredIndex = np.where(Bvalues == B)[0][0]
-fprime_p = curve(svals, *parameterArray[Z-1][requiredIndex])
+fprime_p = curve(svals, *parameterArray[Z][requiredIndex])
 
 # set the bottom limit for the plot
-mm = -10.5
+mm = -0.5
 fprime_p = np.where(fprime_p>mm,fprime_p, np.nan)
 fprime_i = np.where(fprime_i>mm,fprime_i, np.nan)
 
