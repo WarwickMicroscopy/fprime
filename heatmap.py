@@ -1566,8 +1566,10 @@ lobato_array = np.array([[6.473848488352918e-03,-4.901925767802290e-01,5.7328416
 
 # %% subroutines
 
+
 # scattering factor f, Lobato parameterisation
-def lobato(s, ab):
+def lobato(s, Z):
+    ab = lobato_array[Z-1]
     g = 2*s    
     f = ab[0]*(2 + ab[5]*g**2)/(1 + ab[5]*g**2)**2 + \
         ab[1]*(2 + ab[6]*g**2)/(1 + ab[6]*g**2)**2 + \
@@ -1577,21 +1579,21 @@ def lobato(s, ab):
     return f
 
 # Bird & King integrand
-def integrand(sx, sy, s, M, ab):
+def integrand(sx, sy, s, M, Z):
     s1 = np.sqrt((s/2 + sx)**2 + sy**2)
     s2 = np.sqrt((s/2 - sx)**2 + sy**2)
     s_square = sx**2 + sy**2 - (s**2/4)
-    result = lobato(s1, ab)*lobato(s2, ab)*(1 - np.exp(-2*M*s_square))
+    result = lobato(s1, Z)*lobato(s2, Z)*(1 - np.exp(-2*M*s_square))
     return result
 
 # double integral part 1
-def integral1(sy, s, M, ab):
-    return quad_vec(integrand, 0, np.inf, args=(sy, s, M, ab))[0]
+def integral1(sy, s, M, Z):
+    return quad_vec(integrand, 0, np.inf, args=(sy, s, M, Z))[0]
 
 # double integral part 2
 # quad_vec is used instead of something like dblquad so that 2d arrays of s and M may be calculated efficiently
-def integral2(s, M, ab):
-    return preFactor*4*quad_vec(integral1, 0, np.inf, args=(s, M, ab))[0]
+def integral2(s, M, Z):
+    return preFactor*4*quad_vec(integral1, 0, np.inf, args=(s, M, Z))[0]
 
 
 # basic Gaussian for parameterised fit of f'
@@ -1719,8 +1721,7 @@ Bvals = np.linspace(0.1, 4, 80)
 X, Y = np.meshgrid(svals, Bvals)
 
 # from B&K integral
-element = lobato_array[Z-1]
-actualZ = integral2(X, Y, element)
+actualZ = integral2(X, Y, Z)
 actualZpos = np.where(actualZ > 0, actualZ, 0)  # only keep positive values
 
 # interpolated from parameterised curves
