@@ -194,7 +194,7 @@ svals = np.linspace(0, 4, 100)
 finex = np.linspace(0, 6, 100)
 
 Smesh, Mmesh = np.meshgrid(svals, Mvals)
-zvals = fprime(Smesh, Mmesh, element)
+zvals = fprime(Smesh, Mmesh, Z)
 # since negative values of z are deemed unphysical, we compromise by truncating the absorptive form factor at 0
 zpos = np.where(zvals > 0, zvals, 0)
 
