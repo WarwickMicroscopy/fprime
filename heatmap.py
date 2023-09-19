@@ -1,9 +1,11 @@
-#%%
-# loading functions
+#%% loading functions
 import numpy as np
 from scipy.constants import h, c, e, m_e
 import matplotlib.pyplot as plt
 from scipy.integrate import quad_vec
+
+
+# Calculation of absorptive scattering factor
 
 # Accelerating voltage, volts
 V = 200000.0
@@ -1458,67 +1460,7 @@ parameterArray = np.array(
 [1.7499534737213025,3.089946845675583,5.350555024294258,0.3286905585923409,9.68213423947822,0.3286966896786307,-4.99999975646172,1.490739329958535,-9.99987338029304]]]
 )
 
-def gauss(x, a, b):
-    return a*np.exp(-abs(b)*x**2)
-
-def curve(x, *args):
-    f = gauss(x, args[0], args[1]) + \
-        gauss(x, args[2], args[3]) + \
-        gauss(x, args[4], args[5]) + \
-        gauss(x, args[6], args[7]) + args[8]
-    return f
-
-def interpolator(s, B, parameters):
-    if np.any(B == Bvalues):
-        requiredIndex = np.where(Bvalues == B)[0][0]
-        line = curve(s, *parameters[requiredIndex])
-        return np.where(line>0, line, 0)
-    else:    
-        requiredIndex = np.where(Bvalues >= B)[0][0]
-        requiredB = Bvalues[requiredIndex - 1:requiredIndex + 1]
-        line1 = curve(s, *parameters[requiredIndex - 1])
-        line2 = curve(s, *parameters[requiredIndex])
-        interpolatedLine = line1 + (B - requiredB[0])*(line2 - line1)/(requiredB[1] - requiredB[0])
-        return np.where(interpolatedLine > 0, interpolatedLine, 0)
-
-
-#fprime accepts arrays of s values
-def fprime(s, B, Z):
-    if isinstance(s, np.ndarray) and np.any(s<0):
-        raise Exception("inavlid values of s")
-    elif isinstance(s, (int, float)) and s<0:
-        raise Exception("invalid value of s")
-    if B<0:
-        raise Exception("invalid value of B")
-    if Z<1 or Z>118:
-        raise Exception("invalid value of Z")
-    if B>4 or 0<B<0.1:
-        raise Exception("B outside range of parameterisation")
-    if Z>103:
-        raise Exception("elements heavier than Z=103 have not been parameterised")
-    if isinstance(s, np.ndarray) and B==0:
-        return np.zeros(np.shape(s))
-    elif isinstance(s, (int, float)) and B==0:
-        return 0
-    result = interpolator(s, B, parameterArray[Z-1])
-    return result
-
-V = 200000.0
-# lorentz factor
-gamma = 1 + (e*V)/(m_e*c**2)
-# electron velocity
-v = c*np.sqrt(1 - 1/gamma**2)
-
-# The factor of 1/beta is not included here,
-# this is to make the results independent of accelerating voltage so it may be added later
-preFactor = 1e10*2*h/(m_e*c)  # Angstroms
-
-Z = 31
-
-#%%
-# Calculation of absorptive scattering factor
-
-#The lobato parameterisation of the the elastic scattering factors is used, here stored in a text file
+# The lobato parameterisation of the the elastic scattering factors is used, here stored in a text file
 lobato_array = np.array([[6.473848488352918e-03,-4.901925767802290e-01,5.732841603908765e-01,-3.794033014839905e-01,5.544264747740791e-01,2.785198853791489e+00,2.776204283306448e+00,2.775385910506251e+00,2.767593028672588e+00,2.765118976429275e+00],
 [3.057451160998355e+00,-6.200447791273253e+01,6.400555370846145e+01,-5.001325785427806e+00,1.517988287005264e-01,1.089672487260788e+00,9.398387981431211e-01,9.252890343862655e-01,8.229474987086506e-01,5.773931106754022e-01],
 [3.926222728861479e+00,-4.548619626399980e+00,2.193353128786585e+00,6.994512650339657e-02,2.098642248519376e-03,8.142760135172804e+00,4.989410770078558e+00,4.144289992394109e+00,4.019223150656802e-01,1.564790347198236e-01],
@@ -1622,7 +1564,9 @@ lobato_array = np.array([[6.473848488352918e-03,-4.901925767802290e-01,5.7328416
 [4.227294704031012e+00,3.472492275106616e+00,2.648222294968986e-01,3.690728778331929e-03,6.258714262002473e-08,9.724006020400314e+00,8.428737759602104e-01,6.735347439748511e-02,3.123646062633208e-03,4.912170970176192e-05],
 [4.109517024430204e+00,3.457991325227507e+00,2.470873512223867e-01,3.304239209409952e-03,5.991049262319316e-08,9.677359945101202e+00,8.069400424708172e-01,6.328154369541671e-02,2.875446396412092e-03,4.706791536975981e-05]])
 
+# %% subroutines
 
+# scattering factor f, Lobato parameterisation
 def lobato(s, ab):
     g = 2*s    
     f = ab[0]*(2 + ab[5]*g**2)/(1 + ab[5]*g**2)**2 + \
@@ -1632,6 +1576,7 @@ def lobato(s, ab):
         ab[4]*(2 + ab[9]*g**2)/(1 + ab[9]*g**2)**2
     return f
 
+# Bird & King integrand
 def integrand(sx, sy, s, M, ab):
     s1 = np.sqrt((s/2 + sx)**2 + sy**2)
     s2 = np.sqrt((s/2 - sx)**2 + sy**2)
@@ -1639,38 +1584,195 @@ def integrand(sx, sy, s, M, ab):
     result = lobato(s1, ab)*lobato(s2, ab)*(1 - np.exp(-2*M*s_square))
     return result
 
+# double integral part 1
 def integral1(sy, s, M, ab):
     return quad_vec(integrand, 0, np.inf, args=(sy, s, M, ab))[0]
 
+# double integral part 2
 # quad_vec is used instead of something like dblquad so that 2d arrays of s and M may be calculated efficiently
 def integral2(s, M, ab):
     return preFactor*4*quad_vec(integral1, 0, np.inf, args=(s, M, ab))[0]
 
-#%%
-Z = 79
-svals = np.linspace(0, 3, 300)
-Bvals = np.linspace(0.1, 4, 300)
+
+# basic Gaussian for parameterised fit of f'
+def gauss(x, a, b):
+    return a*np.exp(-abs(b)*x**2)
+
+# sum of 4 gaussians + constant gives the parameterised fit for f'
+def curve(x, *args):
+    f = gauss(x, args[0], args[1]) + \
+        gauss(x, args[2], args[3]) + \
+        gauss(x, args[4], args[5]) + \
+        gauss(x, args[6], args[7]) + args[8]
+    return f
+
+# linear interpolation between parameterised f' curves, accepts arrays of s
+def interpolator(s, B, parameters):
+    if np.any(B == Bvalues):
+        requiredIndex = np.where(Bvalues == B)[0][0]
+        line = curve(s, *parameters[requiredIndex])
+        return np.where(line>0, line, 0)
+        # return line
+    else:    
+        requiredIndex = np.where(Bvalues >= B)[0][0]
+        requiredB = Bvalues[requiredIndex - 1:requiredIndex + 1]
+        line1 = curve(s, *parameters[requiredIndex - 1])
+        line2 = curve(s, *parameters[requiredIndex])
+        # linear interpolation
+        interpolatedLine = line1 + (B - requiredB[0])*(line2 - line1)/(requiredB[1] - requiredB[0])
+        # remove points below zero
+        # interpolatedLine = np.where(line1*line2 > 0, interpolatedLine, 0)
+        interpolatedLine = np.where(interpolatedLine > 0, interpolatedLine, 0)
+        return interpolatedLine
+
+# interpolated f' with error checking, accepts arrays of s
+def fprime(s, B, Z):
+    if isinstance(s, np.ndarray) and np.any(s<0):
+        raise Exception("invalid values of s")
+    elif isinstance(s, (int, float)) and s<0:
+        raise Exception("invalid value of s")
+    if B<0:
+        raise Exception("invalid value of B")
+    if Z<1 or Z>118:
+        raise Exception("invalid value of Z")
+    if B>4 or 0<B<0.1:
+        raise Exception("B outside range of parameterisation")
+    if Z>103:
+        raise Exception("elements heavier than Z=103 have not been parameterised")
+    if isinstance(s, np.ndarray) and B==0:
+        return np.zeros(np.shape(s))
+    elif isinstance(s, (int, float)) and B==0:
+        return 0
+    result = interpolator(s, B, parameterArray[Z-1])
+    return result
+
+# constants to apply for a given accelerating voltage
+V = 200000.0
+# lorentz factor
+gamma = 1 + (e*V)/(m_e*c**2)
+# electron velocity
+v = c*np.sqrt(1 - 1/gamma**2)
+# prefactor
+preFactor = 1e10*2*h/(m_e*c)  # Angstroms
+
+
+# %% plot of f'
+Z = 78
+# NB Bvalues = np.array([0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.7, 1, 1.5, 2, 2.75, 4])
+B = 2.0
+svals = np.linspace(0, 4, 60)
+
+#B&K integral
+fprime_i = integral2(svals, B, lobato_array[Z-1])
+
+#parameterised version
+requiredIndex = np.where(Bvalues == B)[0][0]
+fprime_p = curve(svals, *parameterArray[Z-1][requiredIndex])
+
+# set the bottom limit for the plot
+mm = -10.5
+fprime_p = np.where(fprime_p>mm,fprime_p, np.nan)
+fprime_i = np.where(fprime_i>mm,fprime_i, np.nan)
+
+# plot
+plt.rc('font', size=10)
+plt.scatter(svals,fprime_p)
+plt.scatter(svals,fprime_i)
+plt.grid(color='grey', linestyle='-', linewidth=1)
+
+#%% Max error vs Z plot
+maxerror = ([])
+z_list = ([])
+for Z in range(1,103):
+    print(Z)
+    svals = np.linspace(0, 3, 60)
+    Bvals = np.linspace(0.1, 4, 80)
+    X, Y = np.meshgrid(svals, Bvals)
+    
+    element = lobato_array[Z-1]
+    actualZ = integral2(X, Y, element)
+    actualZpos = np.where(actualZ > 0, actualZ, 0)
+    interp = []
+    for B in Bvals:
+        interp.append(fprime(svals, B, Z))
+    interZ = np.array(interp)
+    # relerror = abs(actualZpos - interZ)/actualZpos
+    abserror = abs(actualZpos - interZ)
+    fzeros = np.where(actualZ <= 0, 0, np.nan)
+    z_list.append(Z)
+    maxerror.append(np.max(abserror))
+
+plt.rc('font', size=40)
+fig, ax = plt.subplots(figsize=(20,15))
+ax.scatter(z_list, maxerror, s=100, c='black', marker='o')
+ax.set_xlabel("Atomic number Z")
+ax.set_ylabel("Maximum error in $f'$ (Å)")#, fontsize=25)
+ax.set_xlim([0, 102])
+ax.set_ylim([0, 0.035])
+plt.grid(color='grey', linestyle='-', linewidth=2)
+
+
+# %% calculate array of f', both interpolated and from integral
+Z=78
+svals = np.linspace(0, 3, 60)
+Bvals = np.linspace(0.1, 4, 80)
 X, Y = np.meshgrid(svals, Bvals)
 
+# from B&K integral
 element = lobato_array[Z-1]
 actualZ = integral2(X, Y, element)
-actualZpos = np.where(actualZ > 0, actualZ, 0)
+actualZpos = np.where(actualZ > 0, actualZ, 0)  # only keep positive values
+
+# interpolated from parameterised curves
 interp = []
 for B in Bvals:
     interp.append(fprime(svals, B, Z))
 interZ = np.array(interp)
+
+# map of error, only when both are positive
+
 relerror = abs(actualZpos - interZ)/actualZpos
+abserror = abs(actualZpos - interZ)
+# abserror = np.where(actualZ*interZ>0, abserror, 0)
 fzeros = np.where(actualZ <= 0, 0, np.nan)
 
 
-fig, ax = plt.subplots(figsize=(10,10))
-ax.set_title("Relative error of parameterisation for gold", fontsize=15)
-ax.set_xlabel("s (Å⁻¹)", fontsize=15)
-ax.set_ylabel("B (Å²)", fontsize=15)
+# %% plot f' error map
+
+plt.rc('font', size=35)
+c_map = 'CMRmap'
+
+fig, ax = plt.subplots(figsize=(20,15))
+# ax.set_title("Relative error of parameterisation for gold")#, fontsize=15)
+ax.set_xlabel("s (Å⁻¹)")#, fontsize=25)
+ax.set_ylabel("B (Å²)")#, fontsize=25)
 ax.set_xlim([0, 3])
 ax.set_ylim([0.1, 4])
-plot = ax.pcolormesh(X, Y, relerror, cmap='plasma', vmin=0.01, vmax=0.05)
-ax.pcolormesh(X, Y, fzeros, cmap='inferno')
+plot = ax.pcolormesh(X, Y, relerror, cmap=c_map, vmin=0.0, vmax=0.1)
+ax.pcolormesh(X, Y, fzeros, cmap=c_map)
 fig.colorbar(plot, label = "relative error")
 
-# %%
+
+fig, ax = plt.subplots(figsize=(20,15))
+# ax.set_title("Absolute error of parameterisation for gold")#, fontsize=15)
+ax.set_xlabel("s (Å⁻¹)")#, fontsize=25)
+ax.set_ylabel("B (Å²)")#, fontsize=25)
+ax.set_xlim([0, 3])
+ax.set_ylim([0.1, 4])
+plot = ax.pcolormesh(X, Y, abserror, cmap=c_map)#, vmin=0.01, vmax=0.05)
+ax.pcolormesh(X, Y, fzeros, cmap=c_map)
+fig.colorbar(plot, label = "absolute error")
+
+#%%  write a set of parameters for a latex document
+Z=6
+Mvals = [0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.7, 1, 1.5, 2, 2.75, 4]
+fel = open('table.txt', 'w')
+for j in range(13):
+    fel.write(' & ' + str(Mvals[j]))
+    for i in range(9):
+        fel.write(' & ' + '%.4E' % parameterArray[Z-1, j, i]) 
+    fel.write(' \\\\ \n')
+fel.write(' & & & & & & & &  \\\\ \n')
+fel.write(' \hline')
+# fel.write( np.array2string(parameterArray[0, 12,:], precision=4, separator=' &'))
+fel.close()
