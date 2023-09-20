@@ -1772,12 +1772,13 @@ fel.write(' \hline')
 fel.close()
 
 # %% timing
-n_calls = 200
+n_calls = 100
+n_reps = 20
 s = 0.05
-Biso = 0.45
+Biso = 0.4
 Z = 10
 sp = ([])
-for j in range(10):
+for j in range(n_reps):
     t1_start = time_ns()
     for i in range(n_calls):
         f = integral2(s, Biso, Z)
