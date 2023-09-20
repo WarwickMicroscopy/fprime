@@ -1658,7 +1658,7 @@ v = c*np.sqrt(1 - 1/gamma**2)
 preFactor = 1e10*2*h/(m_e*c)  # Angstroms
 
 
-# %% plot of f'
+# %% plot of f'*exp(-Bs^2)
 Z = 82
 # NB Bvalues = np.array([0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.7, 1, 1.5, 2, 2.75, 4])
 B = 2.75
@@ -1666,20 +1666,26 @@ svals = np.linspace(0, 4, 60)
 
 #B&K integral
 fprime_i = integral2(svals, B, Z)
+fpi_DWF = fprime_i*np.exp(-B*svals*svals)
 
 #parameterised version
 requiredIndex = np.where(Bvalues == B)[0][0]
 fprime_p = curve(svals, *parameterArray[Z-1][requiredIndex])
+fpp_DWF = fprime_p*np.exp(-B*svals*svals)
 
 # set the bottom limit for the plot
-mm = -0.1
+mm = -0.
+fpi_DWF = np.where(fpi_DWF>mm,fpi_DWF, np.nan)
+fpp_DWF = np.where(fpp_DWF>mm,fpp_DWF, np.nan)
 fprime_p = np.where(fprime_p>mm,fprime_p, np.nan)
 fprime_i = np.where(fprime_i>mm,fprime_i, np.nan)
 
 # plot
 plt.rc('font', size=10)
-plt.scatter(svals,fprime_p)
-plt.scatter(svals,fprime_i)
+#plt.scatter(svals,fprime_p)
+#plt.scatter(svals,fprime_i)
+plt.scatter(svals,fpp_DWF)
+plt.scatter(svals,fpi_DWF)
 plt.grid(color='grey', linestyle='-', linewidth=1)
 
 #%% Max error vs Z plot
@@ -1729,14 +1735,15 @@ interZ = np.array(interp)
 actualZ = integral2(X, Y, Z)
 # actualZpos = np.where(actualZ > 0, actualZ, 0)  # only keep positive values
 
+minfp = 0.01*np.max(actualZ)
 # map of error, only when actualZ positive
-relerror = np.where(actualZ > 0, abs(actualZ - interZ)/actualZ, 0)
-abserror = np.where(actualZ > 0, abs(actualZ - interZ), 0)
+relerror = np.where(actualZ > minfp, abs(actualZ - interZ)/actualZ, 0)
+abserror = np.where(actualZ > minfp, abs(actualZ - interZ), 0)
 # abserror = np.where(actualZ*interZ>0, abserror, 0)
 fzeros = np.where(actualZ <= 0, 0, np.nan)
 
 
-# %% plot f' error map
+# % % plot f' error map
 
 plt.rc('font', size=35)
 c_map = 'CMRmap'
