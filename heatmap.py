@@ -3,6 +3,7 @@ import numpy as np
 from scipy.constants import h, c, e, m_e
 import matplotlib.pyplot as plt
 from scipy.integrate import quad_vec
+from time import process_time, time_ns
 
 
 # Calculation of absorptive scattering factor
@@ -1769,3 +1770,25 @@ fel.write(' & & & & & & & &  \\\\ \n')
 fel.write(' \hline')
 # fel.write( np.array2string(parameterArray[0, 12,:], precision=4, separator=' &'))
 fel.close()
+
+# %% timing
+n_calls = 50
+t1_start = time_ns()
+for i in range(n_calls):
+    f = integral2(0.1, 0.5, 100)
+t1_stop = time_ns()
+t1 = (t1_stop-t1_start)/1000000
+      
+print("Elapsed time (ms) - integral:", t1)
+
+t2_start = time_ns()
+for i in range(n_calls):
+    f = fprime(0.1, 0.5, 6)
+t2_stop = time_ns()
+t2 = (t2_stop-t2_start)/1000000
+
+print("Elapsed time (ms) - parameterised:", t2)
+
+speedup = t1/t2
+
+print("Speed up:", speedup)
