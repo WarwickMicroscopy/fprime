@@ -1772,27 +1772,31 @@ fel.write(' \hline')
 fel.close()
 
 # %% timing
-n_calls = 100
-n_reps = 20
+n_calls = 1000
+n_reps = 103
 s = 0.05
-Biso = 0.4
-Z = 10
+Biso = 0.45
+# Z = 10  # mean speed up 10500x
+Z = 82  # mean speed up x
 sp = ([])
-for j in range(n_reps):
+t1 = ([])
+t2 = ([])
+for j in range(1, n_reps):
+    print(n_calls,"repeats, Z =",j)
     t1_start = time_ns()
     for i in range(n_calls):
-        f = integral2(s, Biso, Z)
+        f = integral2(s, Biso, j)
     t1_stop = time_ns()
-    t1 = (t1_stop-t1_start)/1000000
+    t1.append((t1_stop-t1_start)/1000000)
     print("Elapsed time (ms) - integral:", t1)
     
     t2_start = time_ns()
     for i in range(n_calls):
-        f = fprime(s, Biso, Z)
+        f = fprime(s, Biso, j)
     t2_stop = time_ns()
-    t2 = (t2_stop-t2_start)/1000000
+    t2.append((t2_stop-t2_start)/1000000)
     print("Elapsed time (ms) - parameterised:", t2)
-    if(t2>0):
-        speedup = t1/t2
+    if(t2_stop-t2_start>0):
+        speedup = (t1_stop-t1_start)/(t2_stop-t2_start)
         print(j,"Speed up:", int(speedup))
         sp.append(speedup)
