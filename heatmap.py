@@ -1775,23 +1775,23 @@ fel.close()
 n_calls = 200
 s = 0.05
 Biso = 0.45
-Z = 100
-t1_start = time_ns()
-for i in range(n_calls):
-    f = integral2(s, Biso, Z)
-t1_stop = time_ns()
-t1 = (t1_stop-t1_start)/1000000
-      
-print("Elapsed time (ms) - integral:", t1)
-
-t2_start = time_ns()
-for i in range(n_calls):
-    f = fprime(s, Biso, Z)
-t2_stop = time_ns()
-t2 = (t2_stop-t2_start)/1000000
-
-print("Elapsed time (ms) - parameterised:", t2)
-
-speedup = t1/t2
-
-print("Speed up:", int(speedup))
+Z = 10
+sp = ([])
+for j in range(10):
+    t1_start = time_ns()
+    for i in range(n_calls):
+        f = integral2(s, Biso, Z)
+    t1_stop = time_ns()
+    t1 = (t1_stop-t1_start)/1000000
+    print("Elapsed time (ms) - integral:", t1)
+    
+    t2_start = time_ns()
+    for i in range(n_calls):
+        f = fprime(s, Biso, Z)
+    t2_stop = time_ns()
+    t2 = (t2_stop-t2_start)/1000000
+    print("Elapsed time (ms) - parameterised:", t2)
+    if(t2>0):
+        speedup = t1/t2
+        print(j,"Speed up:", int(speedup))
+        sp.append(speedup)
