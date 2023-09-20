@@ -9,7 +9,7 @@ from scipy.integrate import quad_vec
 from scipy.constants import c, h, e, m_e
 
 #interpolate or integrate?
-useInterpolation = True
+useInterpolation = False
 # Accelerating voltage, volts
 V = 200000
 # lorentz factor
@@ -17,6 +17,8 @@ gamma = 1 + (e*V)/(m_e*c**2)
 # electron velocity
 v = c*np.sqrt(1 - 1/gamma**2)
 preFactor = 1e10*2*h/(m_e*v)
+# relativistic correction
+relfactor = 1/np.sqrt(1-v*v/(c*c))
 
 Bvalues = np.array([0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.7, 1, 1.5, 2, 2.75, 4])
 
@@ -1640,6 +1642,6 @@ def interpfprime(s, B, Z):
 #accepts numpy arrays of s values and if interpolation is not used, also arrays of B values
 def main(s, B, Z):
     if useInterpolation:
-        return complex(lobato(s, Z), interpfprime(s, B, Z))
+        return relfactor*complex(lobato(s, Z), interpfprime(s, B, Z))
     else:
-        return complex(lobato(s, Z), fprime(s, B, Z))
+        return relfactor*complex(lobato(s, Z), fprime(s, B, Z))
