@@ -1608,14 +1608,14 @@ def interpolator(s, B, parameters):
     if np.any(B == Bvalues):
         requiredIndex = np.where(Bvalues == B)[0][0]
         line = curve(s, *parameters[requiredIndex])
-        return c/v*np.where(line>0, line, 0)
+        return (c/v)*np.where(line>0, line, 0)
     else:    
         requiredIndex = np.where(Bvalues >= B)[0][0]
         requiredB = Bvalues[requiredIndex - 1:requiredIndex + 1]
         line1 = curve(s, *parameters[requiredIndex - 1])
         line2 = curve(s, *parameters[requiredIndex])
         interpolatedLine = line1 + (B - requiredB[0])*(line2 - line1)/(requiredB[1] - requiredB[0])
-        return c/v*np.where(interpolatedLine > 0, interpolatedLine, 0)
+        return (c/v)*np.where(interpolatedLine > 0, interpolatedLine, 0)
 
 
 #fprime accepts arrays of s values
