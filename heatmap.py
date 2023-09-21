@@ -1601,7 +1601,6 @@ def integral1(sy, s, M, Z):
 def integral2(s, M, Z):
     return preFactor*4*quad_vec(integral1, 0, np.inf, args=(s, M, Z))[0]
 
-
 # basic Gaussian for parameterised fit of f'
 def gauss(x, a, b):
     return a*np.exp(-abs(b)*x**2)
@@ -1666,7 +1665,7 @@ fpi_DWF = fprime_i*np.exp(-B*svals*svals)
 
 #parameterised version
 requiredIndex = np.where(Bvalues == B)[0][0]
-fprime_p = curve(svals, *parameterArray[Z-1][requiredIndex])
+fprime_p = fprime(svals, B, Z)
 fpp_DWF = fprime_p*np.exp(-B*svals*svals)
 
 # set the bottom limit for the plot
@@ -1688,92 +1687,80 @@ plt.grid(color='grey', linestyle='-', linewidth=1)
 #%% Max error vs Z plot
 maxerror = ([])
 z_list = ([])
-for Z in range(1,103):
+for Z in range(1, 103):
     print(Z)
     svals = np.linspace(0, 3, 60)
     Bvals = np.linspace(0.1, 4, 80)
     X, Y = np.meshgrid(svals, Bvals)
     
-    actualZ = integral2(X, Y, Z)
-    actualZpos = np.where(actualZ > 0, actualZ, 0)
-    interp = []
+    # integral f'
+    fprime_i = integral2(X, Y, Z)
+    fprime_i = np.where(fprime_i>0, fprime_i, 0)  # get rid of <0
+    
+    # interpolated f'
+    fprime_p = []
     for B in Bvals:
-        interp.append(fprime(svals, B, Z))
-    interZ = np.array(interp)
-    # relerror = abs(actualZpos - interZ)/actualZpos
-    abserror = abs(actualZpos - interZ)
+        fprime_p_B = fprime(svals, B, Z)
+        fprime_p_B = np.where(fprime_p_B>0, fprime_p_B, 0)  # get rid of <0
+        fprime_p.append(fprime_p_B)
+    fprime_p = np.array(fprime_p)
+    
+    #convert from f' to  f'*exp(-Bs^2)
+    fpi_DWF = fprime_i*np.exp(-B*svals*svals)
+    fpp_DWF = fprime_p*np.exp(-B*svals*svals)
+
+    # difference between the two calcuations
+    abserror = abs(fpi_DWF - fpp_DWF)
     z_list.append(Z)
     maxerror.append(np.max(abserror))
-    fzeros = np.where(actualZ <= 0, 0, np.nan)
 
 plt.rc('font', size=40)
 fig, ax = plt.subplots(figsize=(20,15))
 ax.scatter(z_list, maxerror, s=100, c='black', marker='o')
 ax.set_xlabel("Atomic number Z")
-ax.set_ylabel("Maximum error in $f'$ (Å)")#, fontsize=25)
+ax.set_ylabel("Maximum error in $f' \exp{(-Bs^2)}$ (Å)")#, fontsize=25)
 ax.set_xlim([0, 102])
-ax.set_ylim([0, 0.035])
+ax.set_ylim([0, 0.014])
 plt.grid(color='grey', linestyle='-', linewidth=2)
 
 
 # %% calculate array of f', both interpolated and from integral
-Z=78
+Z=82
 svals = np.linspace(0, 3, 60)
 Bvals = np.linspace(0.1, 4, 80)
 X, Y = np.meshgrid(svals, Bvals)
 
-# interpolated from parameterised curves
-interp = []
-for B in Bvals:
-    interp.append(fprime(svals, B, Z))
-interZ = np.array(interp)
-#convert from f' to  f'*exp(-Bs^2)
-interZcor = interZ*np.exp(-B*svals*svals)
 # from B&K integral
-actualZ = integral2(X, Y, Z)
+fprime_i = integral2(X, Y, Z)
+fprime_i = np.where(fprime_i>0, fprime_i, 0)  # get rid of negative values
+
+# interpolated from parameterised curves
+fprime_p = []
+for B in Bvals:
+    fprime_p_B = fprime(svals, B, Z)
+    fprime_p_B = np.where(fprime_p_B>0, fprime_p_B, 0)  # get rid of <0
+    fprime_p.append(fprime_p_B)
+fprime_p = np.array(fprime_p)
+
 #convert from f' to  f'*exp(-Bs^2)
-actualZcor = actualZ*np.exp(-B*svals*svals)
-# actualZpos = np.where(actualZ > 0, actualZ, 0)  # only keep positive values
+fpi_DWF = fprime_i*np.exp(-B*svals*svals)
+fpp_DWF = fprime_p*np.exp(-B*svals*svals)
 
-# minfp = 0.01*np.max(actualZ)
-# # map of error, only when actualZ positive
-# relerror = np.where(actualZ > minfp, abs(actualZ - interZ)/actualZ, 0)
-# abserror = np.where(actualZ > minfp, abs(actualZ - interZ), 0)
-# # abserror = np.where(actualZ*interZ>0, abserror, 0)
-# fzeros = np.where(actualZ <= 0, 0, np.nan)
-min = 0
-#set minimum value cut off to 1%
-#minfp = 0.01*np.max(actualZcor)
-# map of error, only when actualZ positive
-relerror = np.where(actualZcor > min, abs(actualZcor - interZcor)/actualZcor, 0)
-abserror = np.where(actualZcor > min, abs(actualZcor - interZcor), 0)
-# abserror = np.where(actualZ*interZ>0, abserror, 0)
-fzeros = np.where(actualZ <= 0, 0, np.nan)
+# difference between the two calcuations
+abserror = abs(fpi_DWF - fpp_DWF)
 
-# %% plot f' error map
+# % % plot f' error map
 
 plt.rc('font', size=35)
 c_map = 'CMRmap'
 
 fig, ax = plt.subplots(figsize=(20,15))
-# ax.set_title("Relative error of parameterisation for gold")#, fontsize=15)
+# ax.set_title("Absolute error of yada yada yada")#, fontsize=15)
 ax.set_xlabel("s (Å⁻¹)")#, fontsize=25)
 ax.set_ylabel("B (Å²)")#, fontsize=25)
 ax.set_xlim([0, 3])
 ax.set_ylim([0.1, 4])
-plot = ax.pcolormesh(X, Y, relerror, cmap=c_map, vmin=0.0, vmax=0.1)
-ax.pcolormesh(X, Y, fzeros, cmap=c_map)
-fig.colorbar(plot, label = "relative error")
-
-
-fig, ax = plt.subplots(figsize=(20,15))
-# ax.set_title("Absolute error of parameterisation for gold")#, fontsize=15)
-ax.set_xlabel("s (Å⁻¹)")#, fontsize=25)
-ax.set_ylabel("B (Å²)")#, fontsize=25)
-ax.set_xlim([0, 3])
-ax.set_ylim([0.1, 4])
-plot = ax.pcolormesh(X, Y, abserror, cmap=c_map)#, vmin=0.01, vmax=0.05)
-ax.pcolormesh(X, Y, fzeros, cmap=c_map)
+plot = ax.pcolormesh(X, Y, abserror, cmap=c_map)
 fig.colorbar(plot, label = "absolute error")
 
 #%%  write a set of parameters for a latex document
@@ -1819,3 +1806,15 @@ for j in range(1, n_reps):
         speedup = (t1_stop-t1_start)/(t2_stop-t2_start)
         print(j,"Speed up:", int(speedup))
         sp.append(speedup)
+
+# %% plot of timing
+
+z_list = range(1,103)
+plt.rc('font', size=40)
+fig, ax = plt.subplots(figsize=(20,15))
+ax.scatter(z_list, sp, s=100, c='black', marker='o')
+ax.set_xlabel("Atomic number Z")
+ax.set_ylabel("Increase in speed")#, fontsize=25)
+ax.set_xlim([0, 102])
+ax.set_ylim([0, 30000])
+plt.grid(color='grey', linestyle='-', linewidth=2)
