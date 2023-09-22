@@ -1,5 +1,6 @@
 #%%
-#The final output function is fprime which takes three arguments, an array or single value of s the reciprocal lattice vector,
+#The final output function is main(s, B, Z) which returns the complex scattering factor and takes three arguments:
+#an array or single value of s the reciprocal lattice vector,
 #a single value of B, the temperature factor and a single value of Z, the atomic number
 #s is in units of Å⁻¹, B is in units of Å²
 #V, the accerating potential in Volts, is also required below
