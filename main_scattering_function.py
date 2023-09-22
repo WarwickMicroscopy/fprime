@@ -1,4 +1,16 @@
-#%%
+#!/usr/bin/env python
+
+'''
+main_scattering_function.py: returns the complex scattering factor, optionally calculated using the parameterisation.
+This code is licensed under Creative Commons, see LICENSE.txt for details.
+'''
+
+__author__ = "Milo Thomas"
+__credits__ = ["Milo Thomas", "Anton Cleverley", "Richard Beanland"]
+
+__license__ = "CC"
+__email__ = "Milo.Thomas@warwick.ac.uk"
+
 #The final output function is main(s, B, Z) which returns the complex scattering factor and takes three arguments:
 #an array or single value of s the reciprocal lattice vector,
 #a single value of B, the temperature factor and a single value of Z, the atomic number
@@ -10,9 +22,10 @@ from scipy.integrate import quad_vec
 from scipy.constants import c, h, e, m_e
 
 #interpolate or integrate?
-useInterpolation = False
+useInterpolation = True
 # Accelerating voltage, volts
 V = 200000
+
 # lorentz factor
 gamma = 1 + (e*V)/(m_e*c**2)
 # electron velocity
