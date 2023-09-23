@@ -1725,7 +1725,7 @@ plt.grid(color='grey', linestyle='-', linewidth=2)
 
 
 # %% calculate array of f', both interpolated and from integral
-Z=82
+Z = 67
 svals = np.linspace(0, 3, 60)
 Bvals = np.linspace(0.1, 4, 80)
 X, Y = np.meshgrid(svals, Bvals)
@@ -1747,12 +1747,12 @@ fpi_DWF = fprime_i*np.exp(-B*svals*svals)
 fpp_DWF = fprime_p*np.exp(-B*svals*svals)
 
 # difference between the two calcuations
-abserror = abs(fpi_DWF - fpp_DWF)
+abserror = abs(fpi_DWF - fpp_DWF)/np.max(fpi_DWF)
 
 # % % plot f' error map
 
 plt.rc('font', size=35)
-c_map = 'CMRmap'
+c_map = 'tab20b'
 
 fig, ax = plt.subplots(figsize=(20,15))
 # ax.set_title("Absolute error of yada yada yada")#, fontsize=15)
@@ -1760,8 +1760,8 @@ ax.set_xlabel("s (Å⁻¹)")#, fontsize=25)
 ax.set_ylabel("B (Å²)")#, fontsize=25)
 ax.set_xlim([0, 3])
 ax.set_ylim([0.1, 4])
-plot = ax.pcolormesh(X, Y, abserror, cmap=c_map)
-fig.colorbar(plot, label = "absolute error")
+plot = ax.pcolormesh(X, Y, abserror, vmin=0, vmax=0.006, cmap=c_map)
+fig.colorbar(plot, label = "error")
 
 #%%  write a set of parameters for a latex document
 Z=6
@@ -1794,14 +1794,14 @@ for j in range(1, n_reps):
         f = integral2(s, Biso, j)
     t1_stop = time_ns()
     t1.append((t1_stop-t1_start)/1000000)
-    print("Elapsed time (ms) - integral:", t1)
+    print("Elapsed time (ms) - integral:", (t1_stop-t1_start)/1000000)
     
     t2_start = time_ns()
     for i in range(n_calls):
         f = fprime(s, Biso, j)
     t2_stop = time_ns()
     t2.append((t2_stop-t2_start)/1000000)
-    print("Elapsed time (ms) - parameterised:", t2)
+    print("Elapsed time (ms) - parameterised:", (t2_stop-t2_start)/1000000)
     if(t2_stop-t2_start>0):
         speedup = (t1_stop-t1_start)/(t2_stop-t2_start)
         print(j,"Speed up:", int(speedup))
