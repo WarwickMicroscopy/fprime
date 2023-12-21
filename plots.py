@@ -148,7 +148,7 @@ X, Y = R*np.cos(P), R*np.sin(P)
 fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize= (20,20))
 
 #ax.set_proj_type('ortho')
-z = integrand(X, Y, s, M, element)
+z = integrand(X, Y, s, M, Z)
 ax.plot_surface(X, Y, z, alpha=1)
 
 #ax.plot_wireframe(X, Y, z, color = 'k', linewidth=0.5)
